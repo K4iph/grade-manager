@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GradeManager — Profile & Bảng điểm</title>
+<style>
+:root{
+  --bg:#eef3f8;--card:#fff;--text:#172033;--muted:#64748b;--line:#dbe3ee;
+  --primary:#2563eb;--primary2:#1d4ed8;--danger:#dc2626;--success:#16a34a;
+  --soft:#f5f8fc;--shadow:0 18px 50px rgba(15,23,42,.12)
+}
+[data-theme=dark]{
+  --bg:#0b1220;--card:#111b2e;--text:#f1f5f9;--muted:#94a3b8;--line:#293851;
+  --primary:#60a5fa;--primary2:#3b82f6;--soft:#0f1a2d;
+  --shadow:0 18px 50px rgba(0,0,0,.3)
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+background:radial-gradient(circle at top left,#bfdbfe66,transparent 32rem),var(--bg);color:var(--text)}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{width:min(1200px,calc(100% - 28px));margin:22px auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px}
+.brand{font-size:25px;font-weight:900}.brand span{color:var(--primary)}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--text);padding:10px 14px;border-radius:11px;font-weight:750}
+.btn:hover{filter:brightness(.97);transform:translateY(-1px)}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.danger{color:var(--danger)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:22px}
+.auth{width:min(440px,100%);margin:8vh auto}
+.tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);padding:4px;border-radius:12px;margin:20px 0}
+.tabs button{border:0;background:transparent;color:var(--muted);padding:10px;border-radius:9px;font-weight:800}
+.tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px #00000012}
+.field{margin:14px 0}.field label{display:block;font-size:13px;font-weight:800;margin-bottom:7px}
+.field input{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--text);outline:none}
+.field input:focus{border-color:var(--primary);box-shadow:0 0 0 3px #2563eb1c}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}.error{color:var(--danger);font-size:13px;min-height:18px}
+.hidden{display:none!important}
+.app-shell{display:grid;grid-template-columns:220px 1fr;gap:16px}
+.sidebar{height:max-content;position:sticky;top:16px}
+.side-user{display:flex;align-items:center;gap:11px;padding-bottom:17px;margin-bottom:13px;border-bottom:1px solid var(--line)}
+.avatar{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),#93c5fd);color:#fff;font-size:20px;font-weight:900;flex:none}
+.side-name{font-weight:900;overflow:hidden;text-overflow:ellipsis}.side-username{font-size:12px;color:var(--muted)}
+.menu{display:grid;gap:6px}
+.menu button{width:100%;border:0;background:transparent;color:var(--muted);padding:12px;border-radius:11px;text-align:left;font-weight:800}
+.menu button:hover,.menu button.active{background:var(--soft);color:var(--primary)}
+.menu button.active{box-shadow:inset 3px 0 var(--primary)}
+.side-bottom{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:grid;gap:7px}
+.content{min-width:0}
+.page-title{font-size:27px;font-weight:950;margin:0}.page-subtitle{color:var(--muted);margin:5px 0 20px}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:16px}
+.hero h1{margin:0;font-size:29px}.hero p{margin:5px 0 0;color:var(--muted)}
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.stat{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:15px}
+.stat span{font-size:12px;color:var(--muted)}.stat b{display:block;font-size:25px;margin-top:4px}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+.section-title{font-size:17px;font-weight:900;margin-bottom:13px}
+.profile-head{display:flex;align-items:center;gap:15px}
+.profile-head .avatar{width:72px;height:72px;font-size:28px}
+.profile-name{font-size:25px;font-weight:900}.profile-user{color:var(--muted);margin-top:3px}
+.profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}
+.notice{padding:13px 15px;border-radius:12px;background:var(--soft);border:1px solid var(--line);font-size:13px;line-height:1.55}
+.security{border-left:4px solid var(--primary)}
+.grade-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+.grade-table{width:100%;min-width:920px;border-collapse:collapse}
+.grade-table th,.grade-table td{border:1px solid var(--line);padding:8px;text-align:center}
+.grade-table th{background:var(--soft);font-weight:850}
+.grade-table tr:nth-child(even){background:color-mix(in srgb,var(--soft) 55%,transparent)}
+.grade-table td.subject{text-align:left;font-weight:750;min-width:230px}
+.grade-table input[type=number]{width:54px;padding:6px 4px;text-align:center;border:1px solid var(--line);border-radius:7px;background:var(--card);color:var(--text)}
+.grade-table input:focus{outline:2px solid #2563eb55;border-color:var(--primary)}
+.no-input{color:var(--muted);background:var(--soft)}
+.score-output{font-weight:950;color:#f43f5e;font-size:15px}
+.status-btn{padding:6px 13px;border:0;border-radius:20px;font-weight:850}
+.pass{background:#22c55e;color:#fff}.fail{background:#ef4444;color:#fff}
+.grade-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.grade-tools .tools{display:flex;gap:8px;flex-wrap:wrap}
+.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);opacity:0;background:#111827;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;font-weight:800;transition:.2s;pointer-events:none;z-index:50}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:850px){.app-shell{grid-template-columns:1fr}.sidebar{position:static}.menu{grid-template-columns:repeat(3,1fr)}.side-bottom{grid-template-columns:1fr 1fr}.statgrid{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:560px){.app{width:min(100% - 18px,1200px);margin:12px auto}.card{padding:16px}.menu{grid-template-columns:repeat(2,1fr)}.hero{align-items:flex-start;flex-direction:column}.statgrid{grid-template-columns:1fr 1fr}.top{margin-bottom:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">Grade<span>Manager</span></div>
+    <button class="btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+  </div>
+
+  <section id="authPage" class="card auth">
+    <h1 id="authTitle">Đăng nhập</h1>
+    <p class="hint">Mỗi tài khoản có profile và bảng điểm riêng trên trình duyệt này.</p>
+    <div class="tabs">
+      <button id="loginTab" class="active" onclick="showAuth('login')">Đăng nhập</button>
+      <button id="registerTab" onclick="showAuth('register')">Tạo tài khoản</button>
+    </div>
+    <div id="displayField" class="field hidden">
+      <label>Tên hiển thị</label>
+      <input id="displayName" maxlength="40" placeholder="Ví dụ: test123">
+    </div>
+    <div class="field">
+      <label>Tên đăng nhập</label>
+      <input id="username" maxlength="24" autocomplete="username" placeholder="Ví dụ: test123">
+    </div>
+    <div class="field">
+      <label>Mật khẩu</label>
+      <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="Ít nhất 6 ký tự">
+    </div>
+    <div id="confirmField" class="field hidden">
+      <label>Nhập lại mật khẩu</label>
+      <input id="confirm" type="password" minlength="6" autocomplete="new-password" placeholder="Nhập lại mật khẩu">
+    </div>
+    <div id="authError" class="error"></div>
+    <button class="btn primary" style="width:100%" onclick="submitAuth()">Tiếp tục</button>
+    <p class="hint" style="margin-top:14px">Demo cục bộ: mật khẩu được băm SHA-256 trước khi lưu. Không dùng mật khẩu thật.</p>
+  </section>
+
+  <section id="mainPage" class="hidden">
+    <div class="app-shell">
+      <aside class="sidebar card">
+        <div class="side-user">
+          <div id="sideAvatar" class="avatar">?</div>
+          <div>
+            <div id="sideName" class="side-name"></div>
+            <div id="sideUsername" class="side-username"></div>
+          </div>
+        </div>
+        <nav class="menu">
+          <button id="navDashboard" onclick="showPage('dashboard')">🏠 Tổng quan</button>
+          <button id="navGrades" onclick="showPage('grades')">📊 Bảng điểm</button>
+          <button id="navProfile" onclick="showPage('profile')">👤 Profile</button>
+        </nav>
+        <div class="side-bottom">
+          <button class="btn" onclick="toggleTheme()">🌓 Giao diện</button>
+          <button class="btn" onclick="logout()">↪ Đăng xuất</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section id="dashboardPage" class="page">
+          <div class="card">
+            <div class="hero">
+              <div>
+                <h1 id="welcomeTitle">Xin chào!</h1>
+                <p>Quản lý profile và theo dõi kết quả học tập của bạn.</p>
+              </div>
+              <button class="btn primary" onclick="showPage('grades')">📊 Xem bảng điểm</button>
+            </div>
+            <div class="statgrid">
+              <div class="stat"><span>ĐTB hiện tại</span><b id="dashAvg">-</b></div>
+              <div class="stat"><span>Môn đã tính</span><b id="dashCount">0</b></div>
+              <div class="stat"><span>Môn từ 8.0</span><b id="dashHigh">0</b></div>
+              <div class="stat"><span>Đánh giá Đạt</span><b id="dashPass">0</b></div>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div class="section-title">Bảng điều khiển</div>
+              <div class="notice">
+                Bấm <strong>📊 Bảng điểm</strong> ở menu để nhập điểm. Dữ liệu bảng điểm được lưu riêng theo tài khoản trên trình duyệt này.
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title">Bảo mật</div>
+              <div class="notice security">
+                <strong>Demo cục bộ</strong><br>
+                Tài khoản chỉ tồn tại trong trình duyệt hiện tại. Ví dụ an toàn: <strong>test123</strong>.<br>
+                Không sử dụng mật khẩu thật hoặc thông tin nhạy cảm.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="gradesPage" class="page hidden">
+          <div class="card">
+            <div class="grade-tools">
+              <div>
+                <h1 class="page-title">Bảng điểm học tập lớp 8</h1>
+                <div class="hint">Kết nối tri thức với cuộc sống · Tự động tính ĐTB theo công thức đang có trong bảng.</div>
+              </div>
+              <div class="tools">
+                <button class="btn" onclick="saveGrades()">💾 Lưu bảng điểm</button>
+                <button class="btn danger" onclick="resetGrades()">↻ Xóa điểm</button>
+              </div>
+            </div>
+            <div class="grade-wrap">
+              <table class="grade-table">
+                <thead>
+                  <tr>
+                    <th style="width:4%">STT</th><th>Tên môn học</th>
+                    <th>TX 1</th><th>TX 2</th><th>TX 3</th><th>TX 4</th>
+                    <th>Giữa kỳ</th><th>Cuối kỳ</th><th>ĐTB / Đánh giá</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-type="score"><td>1</td><td class="subject">Ngữ văn</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>2</td><td class="subject">Toán</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>3</td><td class="subject">Tiếng Anh (Global Success)</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>4</td><td class="subject">Khoa học tự nhiên</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>5</td><td class="subject">Lịch sử và Địa lí</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>6</td><td class="subject">Giáo dục công dân</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td class="no-input">-</td><td class="no-input">-</td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>7</td><td class="subject">Tin học</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td class="no-input">-</td><td class="no-input">-</td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="score"><td>8</td><td class="subject">Công nghệ</td>
+                    <td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td><input class="tx" type="number" min="0" max="10" step="0.1"></td><td class="no-input">-</td><td class="no-input">-</td><td><input class="gk" type="number" min="0" max="10" step="0.1"></td><td><input class="ck" type="number" min="0" max="10" step="0.1"></td><td class="score-output">-</td></tr>
+                  <tr data-type="status"><td>9</td><td class="subject">Tiếng Anh Tăng Cường (Achievers)</td><td colspan="6" class="hint">Đánh giá bằng nhận xét</td><td><button class="status-btn pass" onclick="toggleStatus(this)">Đạt</button></td></tr>
+                  <tr data-type="status"><td>10</td><td class="subject">Âm nhạc</td><td colspan="6" class="hint">Đánh giá bằng nhận xét</td><td><button class="status-btn pass" onclick="toggleStatus(this)">Đạt</button></td></tr>
+                  <tr data-type="status"><td>11</td><td class="subject">Mĩ thuật</td><td colspan="6" class="hint">Đánh giá bằng nhận xét</td><td><button class="status-btn pass" onclick="toggleStatus(this)">Đạt</button></td></tr>
+                  <tr data-type="status"><td>12</td><td class="subject">Giáo dục thể chất (GDTC)</td><td colspan="6" class="hint">Đánh giá bằng nhận xét</td><td><button class="status-btn pass" onclick="toggleStatus(this)">Đạt</button></td></tr>
+                  <tr data-type="status"><td>13</td><td class="subject">Hoạt động trải nghiệm, HN</td><td colspan="6" class="hint">Đánh giá bằng nhận xét</td><td><button class="status-btn pass" onclick="toggleStatus(this)">Đạt</button></td></tr>
+                  <tr data-type="status"><td>14</td><td class="subject">Nội dung giáo dục địa phương</td><td colspan="6" class="hint">Đánh giá bằng nhận xét</td><td><button class="status-btn pass" onclick="toggleStatus(this)">Đạt</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="notice" style="margin-top:14px">
+              <strong>Công thức:</strong> (Tổng TX + Giữa kỳ × 2 + Cuối kỳ × 3) / (Số bài TX + 5).
+              <br>GDCD, Tin học và Công nghệ dùng 2 cột TX. Điểm được lưu riêng cho tài khoản đang đăng nhập.
+            </div>
+          </div>
+        </section>
+
+        <section id="profilePage" class="page hidden">
+          <div class="card">
+            <div class="profile-head">
+              <div id="profileAvatar" class="avatar">?</div>
+              <div><div id="profileName" class="profile-name"></div><div id="profileUser" class="profile-user"></div></div>
+            </div>
+            <div class="profile-actions">
+              <button class="btn primary" onclick="document.getElementById('editName').focus()">✏️ Chỉnh sửa</button>
+              <button class="btn" onclick="showPage('grades')">📊 Bảng điểm</button>
+              <button class="btn danger" onclick="deleteAccount()">🗑 Xóa tài khoản</button>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div class="section-title">Thông tin profile</div>
+              <div class="field"><label>Tên hiển thị</label><input id="editName" maxlength="40"></div>
+              <div class="field"><label>Giới thiệu</label><input id="bio" maxlength="120" placeholder="Một chút về bạn..."></div>
+              <button class="btn primary" onclick="saveProfile()">Lưu thay đổi</button>
+            </div>
+            <div class="card">
+              <div class="section-title">Tổng quan tài khoản</div>
+              <div class="statgrid">
+                <div class="stat"><span>Số lần đăng nhập</span><b id="loginCount">0</b></div>
+                <div class="stat"><span>Ngày tạo</span><b id="createdAt">-</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </section>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const USERS_KEY="gm_users_v2", SESSION_KEY="gm_session_v2", THEME_KEY="gm_theme_v2";
+const GRADE_PREFIX="gm_grades_v2_";
+let mode="login", currentPage="dashboard";
+
+function users(){return JSON.parse(localStorage.getItem(USERS_KEY)||"{}")}
+function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u))}
+function currentUsername(){return localStorage.getItem(SESSION_KEY)}
+function currentUser(){const u=currentUsername(),all=users();return u&&all[u]?all[u]:null}
+
+async function hash(text){
+  const data=new TextEncoder().encode(text);
+  const buf=await crypto.subtle.digest("SHA-256",data);
+  return [...new Uint8Array(buf)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+
+function showAuth(m){
+  mode=m;
+  document.getElementById("authTitle").textContent=m==="login"?"Đăng nhập":"Tạo tài khoản";
+  document.getElementById("displayField").classList.toggle("hidden",m==="login");
+  document.getElementById("confirmField").classList.toggle("hidden",m==="login");
+  document.getElementById("loginTab").classList.toggle("active",m==="login");
+  document.getElementById("registerTab").classList.toggle("active",m==="register");
+  document.getElementById("authError").textContent="";
+}
+async function submitAuth(){
+  const u=document.getElementById("username").value.trim().toLowerCase();
+  const p=document.getElementById("password").value, err=document.getElementById("authError"), all=users();
+  if(!/^[a-z0-9_.-]{3,24}$/.test(u)){err.textContent="Tên đăng nhập: 3–24 ký tự, chỉ dùng a-z, 0-9, _, -, .";return}
+  if(p.length<6){err.textContent="Mật khẩu cần ít nhất 6 ký tự.";return}
+  if(mode==="register"){
+    const name=document.getElementById("displayName").value.trim()||u, c=document.getElementById("confirm").value;
+    if(p!==c){err.textContent="Hai mật khẩu không giống nhau.";return}
+    if(all[u]){err.textContent="Tên đăng nhập này đã tồn tại.";return}
+    all[u]={username:u,name,bio:"",passwordHash:await hash(p),createdAt:new Date().toISOString(),loginCount:0};
+    saveUsers(all);localStorage.setItem(SESSION_KEY,u);showMain();toast("Tạo tài khoản thành công!");
+  }else{
+    if(!all[u]||all[u].passwordHash!==await hash(p)){err.textContent="Tên đăng nhập hoặc mật khẩu không đúng.";return}
+    all[u].loginCount=(all[u].loginCount||0)+1;saveUsers(all);localStorage.setItem(SESSION_KEY,u);showMain();toast("Đăng nhập thành công!");
+  }
+}
+function showMain(){
+  const user=currentUser();
+  if(!user){document.getElementById("authPage").classList.remove("hidden");document.getElementById("mainPage").classList.add("hidden");return}
+  document.getElementById("authPage").classList.add("hidden");document.getElementById("mainPage").classList.remove("hidden");
+  updateUserUI();loadGrades();showPage(currentPage);
+}
+function updateUserUI(){
+  const u=currentUsername(),user=currentUser(),name=user.name||u,initial=name.charAt(0).toUpperCase();
+  ["sideAvatar","profileAvatar"].forEach(id=>document.getElementById(id).textContent=initial);
+  document.getElementById("sideName").textContent=name;document.getElementById("sideUsername").textContent="@"+u;
+  document.getElementById("welcomeTitle").textContent="Xin chào, "+name+"!";
+  document.getElementById("profileName").textContent=name;document.getElementById("profileUser").textContent="@"+u;
+  document.getElementById("editName").value=name;document.getElementById("bio").value=user.bio||"";
+  document.getElementById("loginCount").textContent=user.loginCount||0;
+  document.getElementById("createdAt").textContent=new Date(user.createdAt).toLocaleDateString("vi-VN");
+  updateStats();
+}
+function showPage(page){
+  if(!currentUser())return;
+  currentPage=page;
+  document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));
+  document.getElementById(page+"Page").classList.remove("hidden");
+  ["dashboard","grades","profile"].forEach(x=>document.getElementById("nav"+x.charAt(0).toUpperCase()+x.slice(1)).classList.toggle("active",x===page));
+  if(page==="grades")loadGrades();
+  if(page==="dashboard")updateStats();
+}
+function saveProfile(){
+  const u=currentUsername(),all=users();if(!all[u])return;
+  all[u].name=document.getElementById("editName").value.trim()||u;
+  all[u].bio=document.getElementById("bio").value.trim();saveUsers(all);updateUserUI();toast("Đã lưu profile");
+}
+function logout(){saveGrades(true);localStorage.removeItem(SESSION_KEY);showAuth("login");document.getElementById("authPage").classList.remove("hidden");document.getElementById("mainPage").classList.add("hidden");toast("Đã đăng xuất")}
+function deleteAccount(){
+  if(!confirm("Xóa tài khoản này và toàn bộ dữ liệu profile + bảng điểm?"))return;
+  const u=currentUsername(),all=users();delete all[u];saveUsers(all);localStorage.removeItem(SESSION_KEY);localStorage.removeItem(GRADE_PREFIX+u);
+  document.getElementById("mainPage").classList.add("hidden");document.getElementById("authPage").classList.remove("hidden");showAuth("login");toast("Đã xóa tài khoản");
+}
+function toggleTheme(){
+  const dark=document.body.getAttribute("data-theme")!=="dark";
+  if(dark){document.body.setAttribute("data-theme","dark");localStorage.setItem(THEME_KEY,"dark");document.getElementById("themeBtn").textContent="☀️"}
+  else{document.body.removeAttribute("data-theme");localStorage.setItem(THEME_KEY,"light");document.getElementById("themeBtn").textContent="🌙"}
+}
+
+function rowScore(row){
+  const tx=[...row.querySelectorAll(".tx")].map(x=>x.value).filter(x=>x!=="").map(Number);
+  const gk=row.querySelector(".gk").value,ck=row.querySelector(".ck").value;
+  if(tx.length && gk!=="" && ck!==""){
+    const dtb=(tx.reduce((a,b)=>a+b,0)+2*Number(gk)+3*Number(ck))/(tx.length+5);
+    row.querySelector(".score-output").textContent=dtb.toFixed(1);return dtb;
+  }
+  row.querySelector(".score-output").textContent="-";return null;
+}
+function recalcAll(){document.querySelectorAll('tr[data-type="score"]').forEach(rowScore);updateStats()}
+function toggleStatus(btn){btn.textContent=btn.textContent==="Đạt"?"Chưa đạt":"Đạt";btn.className="status-btn "+(btn.textContent==="Đạt"?"pass":"fail");saveGrades(true);updateStats()}
+function gradeRows(){return [...document.querySelectorAll(".grade-table tbody tr")]}
+
+function saveGrades(silent=false){
+  const u=currentUsername();if(!u)return;
+  const data=gradeRows().map(row=>{
+    if(row.dataset.type==="score"){
+      return {type:"score",values:[...row.querySelectorAll("input")].map(x=>x.value)};
+    }
+    return {type:"status",status:row.querySelector(".status-btn").textContent};
+  });
+  localStorage.setItem(GRADE_PREFIX+u,JSON.stringify(data));
+  if(!silent)toast("Đã lưu bảng điểm");
+}
+function loadGrades(){
+  const u=currentUsername();if(!u)return;
+  const data=JSON.parse(localStorage.getItem(GRADE_PREFIX+u)||"null");
+  gradeRows().forEach((row,i)=>{
+    if(!data||!data[i])return;
+    if(row.dataset.type==="score"){
+      [...row.querySelectorAll("input")].forEach((x,j)=>x.value=data[i].values?.[j]||"");
+    }else{
+      const btn=row.querySelector(".status-btn");btn.textContent=data[i].status||"Đạt";btn.className="status-btn "+(btn.textContent==="Đạt"?"pass":"fail");
+    }
+  });
+  recalcAll();
+}
+function resetGrades(){
+  if(!confirm("Xóa toàn bộ điểm của tài khoản hiện tại?"))return;
+  localStorage.removeItem(GRADE_PREFIX+currentUsername());
+  gradeRows().forEach(row=>{
+    if(row.dataset.type==="score")[...row.querySelectorAll("input")].forEach(x=>x.value="");
+    else{const b=row.querySelector(".status-btn");b.textContent="Đạt";b.className="status-btn pass";}
+  });
+  recalcAll();toast("Đã xóa dữ liệu bảng điểm");
+}
+function updateStats(){
+  const scores=gradeRows().filter(r=>r.dataset.type==="score").map(rowScore).filter(x=>x!==null);
+  const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:null;
+  const high=scores.filter(x=>x>=8).length;
+  const pass=gradeRows().filter(r=>r.dataset.type==="status"&&r.querySelector(".status-btn").textContent==="Đạt").length;
+  document.getElementById("dashAvg").textContent=avg===null?"-":avg.toFixed(1);
+  document.getElementById("dashCount").textContent=scores.length;
+  document.getElementById("dashHigh").textContent=high;
+  document.getElementById("dashPass").textContent=pass;
+}
+function toast(t){const x=document.getElementById("toast");x.textContent=t;x.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>x.classList.remove("show"),1800)}
+
+document.addEventListener("input",e=>{
+  if(e.target.matches(".grade-table input")){rowScore(e.target.closest("tr"));saveGrades(true);updateStats()}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.matches(".grade-table input")){
+    const inputs=[...document.querySelectorAll(".grade-table input")],i=inputs.indexOf(e.target);
+    if(i>=0&&inputs[i+1]){e.preventDefault();inputs[i+1].focus();inputs[i+1].select()}
+  }
+});
+(function(){
+  if(localStorage.getItem(THEME_KEY)==="dark"){document.body.setAttribute("data-theme","dark");document.getElementById("themeBtn").textContent="☀️"}
+  if(currentUser())showMain();else showAuth("login");
+})();
+</script>
+</body>
+</html>
